@@ -1,0 +1,11 @@
+[project]
+name = "schelling-segregation"
+version = "0.1.0"
+description = "Interactive marimo teaching app on the Schelling segregation model"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "marimo>=0.23.6",
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.4",
+]

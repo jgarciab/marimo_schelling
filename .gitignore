@@ -1,0 +1,21 @@
+# Build output: rebuilt by CI / on demand
+# (build*/ also catches "build 2" copies the cloud-sync drive creates)
+build*/
+docs/
+_site/
+wasm_export/
+
+# Python and marimo runtime artifacts
+__marimo__/
+__pycache__/
+*.py[oc]
+*.egg-info/
+.venv/
+.venv*/
+.uv-cache/
+
+# OS / editor metadata
+.DS_Store
+.vscode/
+.idea/
+
