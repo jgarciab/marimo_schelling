@@ -39,6 +39,10 @@ def imports():
     HAPPY_GREEN = "#3F7D52"
     UNHAPPY_RED = "#d1495b"
     EDGE_COLOR = "#aaaaaa"
+    # Line-chart colours, kept deliberately distinct from the agent colours
+    # (Okabe-Ito, colour-blind safe).
+    LINE_SIMILAR = "#009e73"  # green — mean similarity / assortativity
+    LINE_HAPPY = "#0072b2"    # blue  — share of happy agents
     # City grids store -1 (amber), 0 (empty house), 1 (violet).
     CITY_CMAP = ListedColormap([AMBER, EMPTY_COLOR, VIOLET])
     return (
@@ -48,6 +52,8 @@ def imports():
         EDGE_COLOR,
         EMPTY_COLOR,
         HAPPY_GREEN,
+        LINE_HAPPY,
+        LINE_SIMILAR,
         ListedColormap,
         UNHAPPY_RED,
         VIOLET,
@@ -216,6 +222,12 @@ def theme(ACCENT, mo):
           background: color-mix(in srgb, var(--sch-accent) 8%, white);
           margin: 0.4rem 0 0.8rem;
         }}
+        /* Tighten the default prose spacing so headings sit closer to
+           their text and lists don't float. */
+        .prose h2 {{ margin-top: 1.1rem; margin-bottom: 0.35rem; }}
+        .prose p {{ margin-top: 0.45rem; margin-bottom: 0.45rem; }}
+        .prose ol, .prose ul {{ margin-top: 0.3rem; margin-bottom: 0.3rem; }}
+        .prose li {{ margin-top: 0.1rem; margin-bottom: 0.1rem; }}
         </style>
         """
     )
@@ -539,9 +551,9 @@ def pg_sim(
 
 @app.cell
 def pg_view(
-    HAPPY_GREEN,
+    LINE_HAPPY,
+    LINE_SIMILAR,
     PG_ROUNDS,
-    VIOLET,
     assortativity,
     draw_city,
     mo,
@@ -558,20 +570,29 @@ def pg_view(
         1, 2, figsize=(7.4, 3.6), layout="constrained"
     )
     draw_city(_ax_g, _grids[_t], f"City at round {_t}")
-    _ax_c.plot(
-        range(len(_sims)), _sims, color=VIOLET, linewidth=2.2,
-        label="mean similarity",
-    )
-    _ax_c.plot(
-        range(len(_haps)), _haps, color=HAPPY_GREEN, linewidth=2.2,
-        label="share happy",
-    )
-    _ax_c.axvline(_t, color="#888888", linestyle="--", linewidth=1)
+
+    # The curves are drawn only up to the round on screen, so they grow as
+    # the round is stepped forward.
+    _x = range(_t + 1)
+    _ax_c.plot(_x, _sims[: _t + 1], color=LINE_SIMILAR, linewidth=2.6,
+               label="similar neighbours (avg.)")
+    _ax_c.plot(_x, _haps[: _t + 1], color=LINE_HAPPY, linewidth=2.6,
+               label="agents happy")
+    _ax_c.scatter([_t, _t], [_sims[_t], _haps[_t]],
+                  color=[LINE_SIMILAR, LINE_HAPPY], s=34, zorder=3)
     _ax_c.set_xlim(0, PG_ROUNDS)
-    _ax_c.set_ylim(0, 1.05)
+    _ax_c.set_ylim(0, 1.02)
+    _ax_c.set_xticks([0, 10, 20, 30, 40])
+    _ax_c.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+    _ax_c.set_yticklabels(["0%", "25%", "50%", "75%", "100%"])
     _ax_c.set_xlabel("round")
-    _ax_c.set_ylabel("fraction")
     _ax_c.set_title("Segregation and happiness")
+    _ax_c.grid(False)
+    _ax_c.grid(axis="y", color="#ececec", linewidth=1)
+    _ax_c.set_axisbelow(True)
+    _ax_c.tick_params(length=0)
+    for _spine in _ax_c.spines.values():
+        _spine.set_visible(False)
     _ax_c.legend(loc="lower right", frameon=False, fontsize=9)
     _ax_c.set_box_aspect(1)  # match the square city panel
 
@@ -647,9 +668,9 @@ def s4_data(np, sweep_thresholds):
 
 @app.cell
 def s4_view(
-    HAPPY_GREEN,
+    LINE_HAPPY,
+    LINE_SIMILAR,
     UNHAPPY_RED,
-    VIOLET,
     mo,
     plt,
     sweep_assort,
@@ -665,10 +686,10 @@ def s4_view(
 
     _ax_a.fill_between(
         sweep_levels, sweep_assort.min(axis=1), sweep_assort.max(axis=1),
-        color=VIOLET, alpha=0.18, linewidth=0,
+        color=LINE_SIMILAR, alpha=0.18, linewidth=0,
     )
-    _ax_a.plot(sweep_levels, _a_mean, color=VIOLET, linewidth=2.4, marker="o",
-               markersize=4)
+    _ax_a.plot(sweep_levels, _a_mean, color=LINE_SIMILAR, linewidth=2.4,
+               marker="o", markersize=4)
     _i_third = int((abs(sweep_levels - 0.30)).argmin())
     _ax_a.annotate(
         "the ⅓ rule",
@@ -686,17 +707,29 @@ def s4_view(
 
     _ax_h.fill_between(
         sweep_levels, sweep_happy.min(axis=1), sweep_happy.max(axis=1),
-        color=HAPPY_GREEN, alpha=0.18, linewidth=0,
+        color=LINE_HAPPY, alpha=0.18, linewidth=0,
     )
-    _ax_h.plot(sweep_levels, _h_mean, color=HAPPY_GREEN, linewidth=2.4,
+    _ax_h.plot(sweep_levels, _h_mean, color=LINE_HAPPY, linewidth=2.4,
                marker="o", markersize=4)
     _ax_h.axvspan(0.72, 0.82, color=UNHAPPY_RED, alpha=0.08)
     _ax_h.text(0.97, 0.38, "no stable\ncity", color=UNHAPPY_RED, fontsize=10,
                ha="right", transform=_ax_h.transAxes)
     _ax_h.set_ylim(0, 1.05)
+    _ax_h.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
+    _ax_h.set_yticklabels(["0%", "25%", "50%", "75%", "100%"])
     _ax_h.set_xlabel("similarity threshold t")
     _ax_h.set_ylabel("share happy after 50 rounds")
     _ax_h.set_title("…and who is actually happy")
+
+    for _ax in (_ax_a, _ax_h):
+        _ax.grid(False)
+        _ax.grid(axis="y", color="#ececec", linewidth=1)
+        _ax.set_axisbelow(True)
+        _ax.tick_params(length=0)
+        _ax.spines["top"].set_visible(False)
+        _ax.spines["right"].set_visible(False)
+        _ax.spines["left"].set_color("#cccccc")
+        _ax.spines["bottom"].set_color("#cccccc")
 
     mo.vstack(
         [
