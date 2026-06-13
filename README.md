@@ -15,19 +15,18 @@ to `main` (see [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
 
 ## What it does
 
-Four sections, one storyline:
+Three sections, one storyline:
 
 1. **One house, one rule** — a single agent and its 8 neighbours, shown both
    as a small network (houses = nodes, adjacency = edges) and as grid cells.
    Two sliders: similar neighbours and the similarity threshold *t*
    (higher *t* = more demanding, less tolerant agents).
-2. **Watch it unfold** — scrub through the rounds of a 30×30 city while the
-   mean-similarity and share-happy curves build up; with *t* = 0.30 the city
-   goes from ≈ 50% to ≈ 75% similar — the famous emergence punchline.
-3. **Playground** — city size, vacancy share, threshold and seed unlocked,
-   with a **Run** timer that plays through the rounds, a **+1 round** step
-   button, a **⏮ Reset** button, and a draggable Round slider.
-4. **Demands vs segregation** — a threshold sweep (3 seeds, min–max band)
+2. **Now a whole city** — a full grid that you step through with the
+   controls in the sidebar (City size, Empty share, threshold, a Round
+   slider, a **+1 round** button and a **New random city** button); with
+   *t* = 0.30 the city goes from ≈ 50% to ≈ 75% similar — the emergence
+   punchline.
+3. **Demands vs segregation** — a threshold sweep (3 seeds, min–max band)
    measured as **assortativity** (0 = random mixing, 1 = complete
    segregation): a steep rise in the moderate range, near-total segregation
    by *t* = 0.7, then collapse past *t* ≈ 0.75 where the city can never
@@ -35,7 +34,7 @@ Four sections, one storyline:
 
 ## The model
 
-- Grid city: half blue agents, half orange, a share of houses empty.
+- Grid city: half violet agents, half amber, a share of houses empty.
 - Moore neighbourhood (up to 8 neighbours). An agent's **similarity ratio**
   = similar occupied neighbours ÷ occupied neighbours; agents with no
   occupied neighbours count as happy.
@@ -44,8 +43,8 @@ Four sections, one storyline:
   rounds, which vectorise in numpy and keep everything interactive under
   Pyodide). The run stops as soon as a round moves nobody.
 - Segregation is summarised two ways: the mean similarity ratio over agents,
-  and Newman's assortativity coefficient computed from the blue–blue /
-  orange–orange / mixed counts of adjacent agent pairs.
+  and Newman's assortativity coefficient computed from the violet–violet /
+  amber–amber / mixed counts of adjacent agent pairs.
 
 Everything is seeded and deterministic; there are no data files and no
 network calls. Dependencies: marimo, numpy, matplotlib.

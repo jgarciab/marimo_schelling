@@ -8,9 +8,9 @@ changed seed or numpy upgrade can't silently turn the story false:
 2. Model invariants: agents conserved every round, cell values stay in
    {-1, 0, 1}, identical seeds give identical histories.
 3. agent_stats matches hand-computed 3x3 examples (incl. empty houses).
-4. The section-2 punchline (t = 0.30): similarity rises from ~50% to
-   >= 65%, everyone ends up happy, the city settles within 30 rounds.
-5. The sweep punchlines (section 4): assortativity ~0 in a mixed city,
+4. The city-section punchline (t = 0.30): similarity rises from ~50% to
+   >= 65%, everyone ends up happy, the city settles within PG_ROUNDS.
+5. The sweep punchlines (section 3): assortativity ~0 in a mixed city,
    rising with t to near-total segregation at t = 0.70, then collapsing
    past t ~ 0.75 where the city cannot settle and most agents stay
    unhappy — and the sweep stays fast enough for the browser.
@@ -71,10 +71,9 @@ def main():
     agent_stats = h["agent_stats"]
     run_schelling = h["run_schelling"]
     assortativity = h["assortativity"]
-    GRID_SIZE = h["GRID_SIZE"]
-    EMPTY_SHARE = h["EMPTY_SHARE"]
-    N_ROUNDS = h["N_ROUNDS"]
-    SIM_SEED = h["SIM_SEED"]
+    PG_ROUNDS = h["PG_ROUNDS"]
+    # The city section's defaults: 30x30, 20% empty, t=0.30, first seed = 1.
+    CITY_SIZE, EMPTY_SHARE, CITY_SEED = 30, 0.20, 1
 
     # --- 2. invariants -----------------------------------------------------
     grids, sims, haps, moves = run_schelling(20, 0.25, 0.4, 30, 5)
@@ -104,20 +103,22 @@ def main():
     assert unhappy_e[2, 2] and not unhappy_e[0, 0], "empty-house happiness off"
     print("OK  similarity ratio matches hand-computed neighbourhoods")
 
-    # --- 4. section-2 punchline ---------------------------------------------
-    tg, ts, th, tm = run_schelling(GRID_SIZE, EMPTY_SHARE, 0.30, N_ROUNDS, SIM_SEED)
+    # --- 4. city-section punchline ------------------------------------------
+    tg, ts, th, tm = run_schelling(
+        CITY_SIZE, EMPTY_SHARE, 0.30, PG_ROUNDS, CITY_SEED
+    )
     assert 0.45 <= ts[0] <= 0.55, f"mixed city should start ~50%, got {ts[0]:.3f}"
     assert ts[-1] >= 0.65, f"t=0.30 should end >= 65% similar, got {ts[-1]:.3f}"
     assert ts[-1] <= 0.85, f"t=0.30 should not look total, got {ts[-1]:.3f}"
     assert th[-1] >= 0.95, f"city should settle happy, got {th[-1]:.3f}"
-    assert tm[-1] == 0, f"should settle within {N_ROUNDS} rounds"
+    assert tm[-1] == 0, f"should settle within {PG_ROUNDS} rounds"
     r0, r1 = assortativity(tg[0]), assortativity(tg[-1])
     assert abs(r0) < 0.10, f"mixed city should have r~0, got {r0:.3f}"
     assert r1 > 0.35, f"settled city should be assortative, got {r1:.3f}"
     print(
         f"OK  punchline: {ts[0]:.0%} -> {ts[-1]:.0%} similar "
         f"(assortativity {r0:.2f} -> {r1:.2f}), settled after "
-        f"{len(tm)} rounds (seed {SIM_SEED})"
+        f"{len(tm)} rounds (seed {CITY_SEED})"
     )
 
     # --- 5. sweep punchlines -------------------------------------------------
@@ -155,7 +156,6 @@ def main():
         "sidebar",
         "title",
         "s1_view",
-        "s2_view",
         "pg_view",
         "s4_view",
         "footer",
